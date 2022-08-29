@@ -1,0 +1,28 @@
+{
+    "editor.tabSize": 2,
+    "editor.codeActionsOnSave": {
+        "source.organizeImports": true
+    },
+    "workbench.tree.renderIndentGuides": "onHover",
+    "breadcrumbs.icons": true,
+    "explorer.compactFolders": false,
+    "explorer.decorations.badges": true,
+    "explorer.decorations.colors": true,
+    "explorer.excludeGitIgnore": false,
+    "explorer.expandSingleFolderWorkspaces": true,
+    "explorer.fileNesting.enabled": true,
+    "explorer.fileNesting.expand": false,
+    "explorer.openEditors.minVisible": 0,
+    "explorer.openEditors.sortOrder": "alphabetical",
+    "outline.icons": true,
+    "outline.problems.badges": true,
+    "eslint.alwaysShowStatus": true,
+    "cSpell.words": [
+        "linebreak"
+    ],
+    "explorer.fileNesting.patterns": {
+        "package.json": ".eslintrc, yarn.lock, .gitignore, app.config.js, babel.config.js, eas.json, tsconfig.json, metro.config.js",
+        "*.js": "${capture}.lib.js",
+        "*.tsx": "${capture}.lib.tsx"
+    }
+}
