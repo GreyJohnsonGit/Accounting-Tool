@@ -1,1 +1,1 @@
-console.log('Test, Test, 1, 2, 3.');
+export const foo = () => 2;

@@ -3,15 +3,12 @@
   "parser": "@typescript-eslint/parser",
   "plugins": [
     "@typescript-eslint",
-    "react",
     "jest"
   ],
   "extends": [
     "eslint:recommended",
     "plugin:@typescript-eslint/eslint-recommended",
     "plugin:@typescript-eslint/recommended",
-    "plugin:react/recommended",
-    "plugin:react-hooks/recommended"
   ],
   "env": {
     "browser": true,
@@ -30,16 +27,12 @@
     "linebreak-style": ["error", "unix"],
     "quotes": ["error", "single"],
     "semi": ["error", "always"],
-    "react/prop-types": "off",
-    "react/jsx-uses-react": "off",
-    "react/react-in-jsx-scope": "off",
-    "react-hooks/rules-of-hooks": "error",
-    "react-hooks/exhaustive-deps": "warn",
     "eqeqeq": ["error", "always"],
     "no-empty-function": "off",
     "@typescript-eslint/no-empty-function": "off"
   },
   "globals": {
-    "__DEV__": "readonly"
+    "__DEV__": "readonly",
+    "module": "writable"
   }
 }
