@@ -1,0 +1,17 @@
+[package]
+name = "accounting_tool"
+version = "0.1.0"
+edition = "2021"
+
+[dependencies]
+serde = {version = "1.0.152", features = ["derive"] }
+uuid = {version = "1.2.2", features = ["v4", "fast-rng", "macro-diagnostics"] }
+dialoguer = {version = "0.10.3"}
+
+[lib]
+name = "lib"
+path = "src/lib.rs"
+
+[[bin]]
+name = "bin"
+path = "src/main.rs"
