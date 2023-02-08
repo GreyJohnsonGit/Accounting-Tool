@@ -1,62 +1,58 @@
 use uuid::Uuid;
+use serde::{Serialize, Deserialize};
 
-use crate::{
-  currency::CurrencyId,
-};
-
-#[derive(Debug, Clone, Copy)]
+#[derive(Debug, Clone, Copy, Serialize, Deserialize)]
 pub enum BalanceType {
   Debit,
-  Credit
+  Credit,
 }
 
-#[derive(Debug, Clone, Copy)]
-pub enum AccountType {
-  Liability,
-  Equity,
-  Asset
-}
-
-pub type AccountId = String;
-#[derive(Debug)]
-pub struct Account {
-  pub id: AccountId,
-  pub name: String,
-  pub balance_type: BalanceType,
-  pub account_type: AccountType
-}
-
-impl Account {
-  pub fn new(
-    name: String,
-    balance_type: BalanceType,
-    account_type: AccountType
-  ) -> Account {
-    Account { 
-      id: Uuid::new_v4().to_string(),
-      name,
-      balance_type,
-      account_type
+impl BalanceType {
+  pub fn as_str(self) -> &'static str {
+    match self {
+      BalanceType::Debit => "Debit",
+      BalanceType::Credit => "Credit",
     }
   }
 }
 
-pub trait AccountChange {
-  fn get_account_id(&self) -> AccountId;
-  fn get_currency_id(&self) -> CurrencyId;
-  fn get_value(&self) -> f64;
+#[derive(Debug, Clone, Copy, Serialize, Deserialize)]
+pub enum AccountType {
+  Liability,
+  Equity,
+  Asset,
 }
 
-#[derive(Debug)]
-pub struct Debit {
-  account_id: AccountId,
-  currency_id: CurrencyId,
-  amount: f64,
+pub type AccountId = String;
+#[derive(Debug, Serialize, Deserialize)]
+pub struct Account {
+  pub id: AccountId,
+  pub name: String,
+  pub balance_type: BalanceType,
+  pub account_type: AccountType,
+  reference_count: u32
 }
 
-#[derive(Debug)]
-pub struct Credit {
-  account_id: AccountId,
-  currency_id: CurrencyId,
-  amount: f64,
+impl Account {
+  pub fn new(name: String, balance_type: BalanceType, account_type: AccountType) -> Account {
+    Account {
+      id: Uuid::new_v4().to_string(),
+      name,
+      balance_type,
+      account_type,
+      reference_count: 0
+    }
+  }
+
+  pub fn increment_reference(mut self) {
+    self.reference_count += 1;
+  }
+
+  pub fn decrement_reference(mut self) {
+    self.reference_count -= 1;
+  }
+
+  pub fn is_referenced(self) -> bool {
+    self.reference_count != 0
+  }
 }

@@ -1,25 +1,20 @@
 use std::collections::HashMap;
 
-use dialoguer::{Input, theme::ColorfulTheme, Confirm};
+use dialoguer::{theme::ColorfulTheme, Confirm, Input};
 
 use crate::{
-  journal::Journal, 
-  account::{AccountId, Account, BalanceType, AccountType}, 
-  page::Page, 
-  lookup_selection::{
-    LookupEntry, 
-    lookup_selection
-  }, 
+  account::{Account, AccountId, AccountType, BalanceType},
+  journal::Journal,
+  page::Page,
   utility::{
     on_error, 
-    on_not_found
-  }, unwrapper::get_account
+    on_not_found,
+    LabeledItem,
+    select_with_labels
+  },
 };
 
-pub fn new_account<'a>(
-  accounts: Option<&'a mut HashMap<AccountId, Account>>,
-  page: &'a mut Page
-) {
+pub fn new_account<'a>(accounts: Option<&'a mut HashMap<AccountId, Account>>, page: &'a mut Page) {
   let accounts = match accounts {
     None => return on_not_found(page),
     Some(accounts) => accounts,
@@ -28,33 +23,27 @@ pub fn new_account<'a>(
   let name = match Input::with_theme(&ColorfulTheme::default())
     .with_prompt("Account Name:")
     .with_initial_text(format!("Account {}", accounts.len()))
-    .interact() 
+    .interact()
   {
     Err(error) => return on_error(page, error),
     Ok(name) => name,
   };
 
   let options = vec![
-    LookupEntry::from("Debit", BalanceType::Debit),
-    LookupEntry::from("Credit", BalanceType::Credit)
-  ]; 
-  let balance_type = match lookup_selection(
-    "Balance Type:".to_string(), 
-    &options
-  ) {
-    Err(error) => return on_error(page, error),
-    Ok(balance_type) => balance_type.clone()
-  };
-  
-  let options = vec![
-    LookupEntry::from("Liability", AccountType::Liability),
-    LookupEntry::from("Asset", AccountType::Asset),
-    LookupEntry::from("Equity", AccountType::Equity)
+    LabeledItem::from("Debit".to_string(), BalanceType::Debit),
+    LabeledItem::from("Credit".to_string(), BalanceType::Credit),
   ];
-  let account_type = match lookup_selection(
-    "Account Type:".to_string(), 
-    &options
-  ) {
+  let balance_type = match select_with_labels("Balance Type:".to_string(), &options) {
+    Err(error) => return on_error(page, error),
+    Ok(balance_type) => balance_type.clone(),
+  };
+
+  let options = vec![
+    LabeledItem::from("Liability".to_string(), AccountType::Liability),
+    LabeledItem::from("Asset".to_string(), AccountType::Asset),
+    LabeledItem::from("Equity".to_string(), AccountType::Equity),
+  ];
+  let account_type = match select_with_labels("Account Type:".to_string(), &options) {
     Err(error) => return on_error(page, error),
     Ok(account_type) => account_type.clone(),
   };
@@ -64,40 +53,42 @@ pub fn new_account<'a>(
   *page = Page::SelectAccount;
 }
 
+// Todo change $journal dep into $accounts dep
 pub fn select_account<'a>(
   account_id: &'a mut Option<AccountId>,
   journal: Option<&'a mut Journal>,
-  page: &'a mut Page
+  page: &'a mut Page,
 ) {
   *account_id = None;
 
   enum Selection<'a> {
     Account(&'a AccountId),
     NewAccount,
-    Back
+    Back,
   }
 
   let journal = match journal {
     None => return on_not_found(page),
     Some(journal) => journal,
-};
+  };
 
   let accounts = &journal.accounts;
-  let mut options = accounts.iter()
-    .map(|(a_id, a)| LookupEntry::from(&a.name, Selection::Account(a_id)))
+  let mut options = accounts
+    .iter()
+    .map(|(id, a)| LabeledItem::from(a.name.clone(), Selection::Account(id)))
     .collect::<Vec<_>>();
-  options.sort_by(|a, b| a.title.cmp(b.title));
+  options.sort_by(|a, b| a.label.cmp(&b.label));
   options.extend(vec![
-    LookupEntry::from("[New Account]", Selection::NewAccount),
-    LookupEntry::from("[Back]", Selection::Back)
+    LabeledItem::from("[New Account]".to_string(), Selection::NewAccount),
+    LabeledItem::from("[Back]".to_string(), Selection::Back),
   ]);
   let options = options;
 
-  let selection = match lookup_selection("Select Account".to_string(), &options) {
+  let selection = match select_with_labels("Select Account".to_string(), &options) {
     Err(error) => return on_error(page, error),
     Ok(selection) => selection,
   };
-  
+
   match *selection {
     Selection::Account(id) => {
       match accounts.get(id) {
@@ -105,22 +96,19 @@ pub fn select_account<'a>(
         Some(account) => {
           *account_id = Some(account.id.clone());
           *page = Page::ViewAccount;
-        },
-      };    
-    },
+        }
+      };
+    }
     Selection::NewAccount => {
       *page = Page::NewAccount;
-    },
+    }
     Selection::Back => {
       *page = Page::ViewJournal;
-    },
+    }
   };
 }
 
-pub fn view_account(
-  account: Option<&mut Account>,
-  page: &mut Page
-) {
+pub fn view_account(account: Option<&mut Account>, page: &mut Page) {
   enum Selection {
     Back,
     Display,
@@ -128,9 +116,9 @@ pub fn view_account(
   }
 
   let options = vec![
-    LookupEntry::from("[Back]", Selection::Back),
-    LookupEntry::from("[Display]", Selection::Display),
-    LookupEntry::from("[Delete]", Selection::Delete),
+    LabeledItem::from("[Back]".to_string(), Selection::Back),
+    LabeledItem::from("[Display]".to_string(), Selection::Display),
+    LabeledItem::from("[Delete]".to_string(), Selection::Delete),
   ];
 
   let account = match account {
@@ -138,29 +126,22 @@ pub fn view_account(
     Some(account) => account,
   };
 
-  let selection = match lookup_selection(
-    account.name.to_string(), 
-    &options
-  ) {
+  let selection = match select_with_labels(account.name.to_string(), &options) {
     Err(error) => return on_error(page, error),
     Ok(selection) => selection,
   };
 
   match *selection {
     Selection::Display => println!("{:#?}", account),
-    Selection::Back => {
-      *page = Page::SelectAccount
-    },
-    Selection::Delete => {
-      *page = Page::DeleteAccount
-    },
-}
+    Selection::Back => *page = Page::SelectAccount,
+    Selection::Delete => *page = Page::DeleteAccount,
+  }
 }
 
 pub fn delete_account<'a>(
   accounts: Option<&'a mut HashMap<AccountId, Account>>,
   account_id: &Option<AccountId>,
-  page: &'a mut Page
+  page: &'a mut Page,
 ) {
   let accounts = match accounts {
     None => return on_not_found(page),
@@ -177,26 +158,20 @@ pub fn delete_account<'a>(
     Some(account) => account.name.clone(),
   };
 
-  let should_delete = match Confirm::with_theme(
-      &ColorfulTheme::default()
-    )
-    .with_prompt(
-      format!("Are you sure you want to delete \"{}\"?", name)
-    )
+  let should_delete = match Confirm::with_theme(&ColorfulTheme::default())
+    .with_prompt(format!("Are you sure you want to delete \"{}\"?", name))
     .default(false)
-    .interact() 
+    .interact()
   {
     Err(error) => return on_error(page, error),
     Ok(should_delete) => should_delete,
   };
-  
+
   match should_delete {
-    false => {
-      *page = Page::ViewAccount
-    },
+    false => *page = Page::ViewAccount,
     true => {
       accounts.remove(account_id);
       *page = Page::SelectAccount
-    },
+    }
   }
 }

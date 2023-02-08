@@ -7,5 +7,15 @@ pub enum Page {
   SelectAccount,
   NewAccount,
   ViewAccount,
-  DeleteAccount
+  DeleteAccount,
+
+  SelectTransaction,
+  NewTransaction,
+  ViewTransaction,
+  DeleteTransaction,
+
+  SelectAccountChange,
+  NewAccountChange,
+  ViewAccountChange,
+  DeleteAccountChange,
 }
